@@ -543,8 +543,6 @@ Now let's move on and start building our models!
 
 ***
 
-## <a id="build">🔨 Model Building</a>
-
 # <a id=""> Features extraction</a>
 
 ## Vectorizing Text
@@ -677,6 +675,13 @@ def clean_dataset(df, y):
     df.drop(columns=['y'], inplace=True)
     return df, y
 
+def clean_test_dataset(df):
+    assert isinstance(df, pd.DataFrame), "df needs to be a pd.DataFrame"
+    df.dropna(inplace=True)
+    indices_to_keep = ~df.isin([np.nan, np.inf, -np.inf]).any(1)
+    df=df[indices_to_keep].astype(np.float64)
+    return df
+
 def logistic_regressor(x_train, y_train):
     n_jobs=[-1]
 
@@ -696,258 +701,26 @@ def logistic_regressor(x_train, y_train):
 
 from sklearn.metrics import accuracy_score
 model_tf=logistic_regressor(x_train_tf, y_train_tf)
+
+x_val_tf, y_val_tf=clean_dataset(x_val_tf, y_val_tf)
 score=model_tf.score(x_val_tf, y_val_tf)
-score
+print("validation_score: ", score)
 
 x_test_tf=tif.transform(df_test['text_cleaned']).toarray()
-pred=model_tf.predict(x_test)
+x_test_tf=pd.DataFrame(x_test_tf)
+x_test_tf[['word_count', 'char_count', 'avg_word_len', 'punc_per']]=df_test[['word_count', 'char_count', 'avg_word_len', 'punc_per']]
+x_test_tf=clean_test_dataset(x_test_tf)
+pred=model_tf.predict(x_test_tf)
 print("accuracy: ", accuracy_score(model_tf.predict(x_val_tf), y_val_tf))
 
-df_test['target']=pred
-df_submit['target']=pred
-df_submit.head()
-df_submit.to_csv('sample_submission.csv')
 
-"""### Doc2vec"""
-
-from sklearn.metrics import accuracy_score
-model_tf=logistic_regressor(x_train_doc, y_train_doc)
-score=model.score(x_val_doc, y_val_doc)
-score
-
-print("accuracy: ", accuracy_score(model_tf.predict(x_val_doc), y_val_doc))
-pred_doc=model_tf.predict(x_test_doc)
-
-df_test['target']=pred_doc
-df_submit['target']=pred_doc
-df_submit.head()
-df_submit.to_csv('sample_submission.csv')
-
-"""## Model à Transformers"""
-
-import tensorflow as tf
-from tensorflow import keras
-from tensorflow.keras.layers import MultiHeadAttention, LayerNormalization, Dropout, Layer
-from tensorflow.keras.layers import Embedding, Input, GlobalAveragePooling1D, Dense
-from tensorflow.keras.datasets import imdb
-from tensorflow.keras.models import Sequential, Model
-import numpy as np
-import warnings
-warnings.filterwarnings("ignore", category=np.VisibleDeprecationWarning)
-
-"""Bloc de transformers"""
-
-class TransformerBlock(Layer):
-    def __init__(self, embed_dim, num_heads, ff_dim, rate=0.1):
-        super(TransformerBlock, self).__init__()
-        self.att = MultiHeadAttention(num_heads=num_heads, key_dim=embed_dim)
-        self.ffn = Sequential(
-            [Dense(ff_dim, activation="relu"), 
-             Dense(embed_dim),]
-        )
-        self.layernorm1 = LayerNormalization(epsilon=1e-6)
-        self.layernorm2 = LayerNormalization(epsilon=1e-6)
-        self.dropout1 = Dropout(rate)
-        self.dropout2 = Dropout(rate)
-
-    def call(self, inputs, training):
-        attn_output = self.att(inputs, inputs)
-        attn_output = self.dropout1(attn_output, training=training)
-        out1 = self.layernorm1(inputs + attn_output)
-        ffn_output = self.ffn(out1)
-        ffn_output = self.dropout2(ffn_output, training=training)
-        return self.layernorm2(out1 + ffn_output)
-
-class TokenAndPositionEmbedding(Layer):
-    def __init__(self, maxlen, vocab_size, embed_dim):
-        super(TokenAndPositionEmbedding, self).__init__()
-        self.token_emb = Embedding(input_dim=vocab_size, output_dim=embed_dim)
-        self.pos_emb = Embedding(input_dim=maxlen, output_dim=embed_dim)
-
-    def call(self, x):
-        maxlen = tf.shape(x)[-1]
-        positions = tf.range(start=0, limit=maxlen, delta=1)
-        positions = self.pos_emb(positions)
-        x = self.token_emb(x)
-        return x + positions
-
-embed_dim = 32  # Embedding size for each token
-num_heads = 2  # Number of attention heads
-ff_dim = 32  # Hidden layer size in feed forward network inside transformer
-from keras.preprocessing.text import Tokenizer
-tokenizer = Tokenizer()
-tokenizer.fit_on_texts(df_train['cleaned_test'])
-vocab_size = len(tokenizer.word_index) + 1
-
-def transformers_model(X_train_i, y_train_i, X_val_i, y_val_i, input ):
-  inputs = Input(shape=(input,))
-  embedding_layer = TokenAndPositionEmbedding(input, vocab_size, embed_dim)
-  x = embedding_layer(inputs)
-  transformer_block = TransformerBlock(embed_dim, num_heads, ff_dim)
-  x = transformer_block(x)
-  x = GlobalAveragePooling1D()(x)
-  x = Dropout(0.1)(x)
-  x = Dense(20, activation="relu")(x)
-  x = Dropout(0.1)(x)
-  outputs = Dense(1, activation="sigmoid")(x)
-  model_0 = Model(inputs=inputs, outputs=outputs)
-  print(model_0.summary())
-  model_0.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-
-  history = model_0.fit(X_train_i, y_train_i, 
-                    batch_size=64, epochs=10, 
-                    validation_data=(X_val_i, y_val_i)
-                   )
-  return history, model_0
-
-"""### Transformers with tfidf vectorizer"""
-
-from sklearn.model_selection import train_test_split
-x_train, x_val, y_train, y_val=train_test_split(X_tfidf.toarray(),df_train['target'],  test_size=0.1, random_state=123)
-
-x_train = tf.keras.preprocessing.sequence.pad_sequences(x_train, maxlen=2000)
-x_val = tf.keras.preprocessing.sequence.pad_sequences(x_val, maxlen=2000)
-maxlen=2000
-
-y_train=np.array(y_train.tolist())
-y_val=np.array(y_val.tolist())
-
-y_train=np.array(y_train)
-
-history, model_tft=transformers_model(x_train, y_train, x_val, _val, x_train.shape[1] )
-
-#Affichage du graphe de perte et de precision
-fig, axes=plt.subplots(2, 2)
-fig.set_figheight(10)
-axes[0, 0].plot(history.history["accuracy"])
-axes[0, 0].set_title("accuracy")
-axes[0, 1].plot(history.history['loss'], c='r')
-axes[0, 1].set_title("loss")
-axes[1, 0].plot(history.history["val_accuracy"])
-axes[1, 0].set_title("val_accuracy")
-axes[1, 1].plot(history.history['val_loss'], c='r')
-axes[1, 1].set_title("val_loss")
-plt.show()
-
-test=tif.transform(df_test['text_cleaned']).toarray()
-x_test= tf.keras.preprocessing.sequence.pad_sequences(test, maxlen=2000)
-pred=model_tft.predict(x_test)
-
-pred=[round(i[0]) for i in pred]
-print(pred)
 
 df_test['target']=pred
 df_submit['target']=pred
 df_submit.head()
-df_submit.to_csv('sample_submission1.csv')
 
-"""### Transformers with tfidf vectorizer"""
+df_test[['text_cleaned', "target"]]
 
-maxlen=2000
-x_train_doc = tf.keras.preprocessing.sequence.pad_sequences(x_train_doc, maxlen)
-x_val_doc = tf.keras.preprocessing.sequence.pad_sequences(x_val_doc, maxlen)
+df_test.target.describe()
 
-history, doc_model=transformers_model(x_train_doc, y_train_doc, x_val_doc, y_val_doc, x_train_doc.shape[1])
-
-#Affichage du graphe de perte et de precision
-fig, axes=plt.subplots(2, 2)
-fig.set_figheight(10)
-axes[0, 0].plot(history.history["accuracy"])
-axes[0, 0].set_title("accuracy")
-axes[0, 1].plot(history.history['loss'], c='r')
-axes[0, 1].set_title("loss")
-axes[1, 0].plot(history.history["val_accuracy"])
-axes[1, 0].set_title("val_accuracy")
-axes[1, 1].plot(history.history['val_loss'], c='r')
-axes[1, 1].set_title("val_loss")
-plt.show()
-
-x_test_doc= tf.keras.preprocessing.sequence.pad_sequences(x_test_doc, maxlen=2000)
-pred=doc_model.predict(x_testçdoc)
-
-pred=[round(i[0]) for i in pred]
-print(pred)
-
-df_test['target']=pred
-df_submit['target']=pred
-df_submit.head()
-df_submit.to_csv('sample_submission1.csv')
-
-"""## Model Pré-entrainé"""
-
-import tensorflow as tf
-import tensorflow_hub as hub
-import tensorflow_datasets as tfds
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
-import numpy as np
-import os
-
-embedding = "https://tfhub.dev/google/nnlm-en-dim50/2"
-hub_layer = hub.KerasLayer(embedding, input_shape=[], 
-                           dtype=tf.string, trainable=True)
-                           
-
-model = Sequential()
-model.add(hub_layer)
-model.add(Dense(16, activation='relu'))
-model.add(Dense(1, activation='sigmoid'))
-
-model.summary()
-
-model.compile(optimizer='adam',
-              loss=tf.keras.losses.BinaryCrossentropy(from_logits=True),
-              metrics=['accuracy'])
-              
-history = model.fit(df_train['text_cleaned'], df_train['target'], 
-                    epochs=5,
-                    validation_split=0.1,
-                    verbose=1)
-
-model.predict(df_test['text_cleaned'])
-
-pred=[round(i[0]) for i in pred]
-print(pred)
-
-df_test['target']=pred
-
-df_submit['target']=pred
-df_submit.head()
-
-df_submit.to_csv('sample_submission.csv')
-
-df_test[df_test['target']==0]['text_cleaned']
-
-"""## A enlever"""
-
-model_0.compile(optimizer="adam", loss="binary_crossentropy", metrics=["accuracy"])
-
-history = model_0.fit(x_train, y_train, 
-                    batch_size=64, epochs=10, 
-                    validation_data=(x_val, y_val)
-                   )
-
-#Affichage du graphe de perte et de precision
-fig, axes=plt.subplots(2, 2)
-fig.set_figheight(10)
-axes[0, 0].plot(history.history["accuracy"])
-axes[0, 0].set_title("accuracy")
-axes[0, 1].plot(history.history['loss'], c='r')
-axes[0, 1].set_title("loss")
-axes[1, 0].plot(history.history["val_accuracy"])
-axes[1, 0].set_title("val_accuracy")
-axes[1, 1].plot(history.history['val_loss'], c='r')
-axes[1, 1].set_title("val_loss")
-plt.show()
-
-test=tif.transform(df_test['text_cleaned']).toarray()
-x_test= tf.keras.preprocessing.sequence.pad_sequences(test, maxlen=2000)
-pred=model_0.predict(x_test)
-
-pred=[round(i[0]) for i in pred]
-print(pred)
-
-df_test['target']=pred
-df_submit['target']=pred
-df_submit.head()
-df_submit.to_csv('sample_submission1.csv')
+df_submit.to_csv('sample_submission.csv', index=False)
