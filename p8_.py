@@ -724,3 +724,22 @@ df_test[['text_cleaned', "target"]]
 df_test.target.describe()
 
 df_submit.to_csv('sample_submission.csv', index=False)
+
+"""### Doc2vec"""
+
+from sklearn.metrics import accuracy_score
+model_doc=logistic_regressor(x_train_doc, y_train_doc)
+
+score=model_doc.score(x_val_doc, y_val_doc)
+score
+
+print("accuracy: ", accuracy_score(model_doc.predict(x_val_doc), y_val_doc))
+pred_doc=model_tf.predict(x_test_doc)
+
+pred_doc=[int(i) for i in pred_doc]
+np.unique(pred_doc)
+
+df_test['target']=pred_doc
+df_submit['target']=pred_doc
+df_submit.head()
+df_submit.to_csv('sample_submission.csv', index=False)
