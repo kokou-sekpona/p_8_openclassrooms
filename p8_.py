@@ -713,7 +713,7 @@ x_test_tf=clean_test_dataset(x_test_tf)
 pred=model_tf.predict(x_test_tf)
 print("accuracy: ", accuracy_score(model_tf.predict(x_val_tf), y_val_tf))
 
-
+pred=[int(i) for i in pred]
 
 df_test['target']=pred
 df_submit['target']=pred
