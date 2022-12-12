@@ -725,6 +725,8 @@ df_test.target.describe()
 
 df_submit.to_csv('sample_submission.csv', index=False)
 
+#with adding df  columns
+
 """### Doc2vec"""
 
 from sklearn.metrics import accuracy_score
@@ -734,7 +736,7 @@ score=model_doc.score(x_val_doc, y_val_doc)
 score
 
 print("accuracy: ", accuracy_score(model_doc.predict(x_val_doc), y_val_doc))
-pred_doc=model_tf.predict(x_test_doc)
+pred_doc=model_doc.predict(x_test_doc)
 
 pred_doc=[int(i) for i in pred_doc]
 np.unique(pred_doc)
@@ -743,3 +745,26 @@ df_test['target']=pred_doc
 df_submit['target']=pred_doc
 df_submit.head()
 df_submit.to_csv('sample_submission.csv', index=False)
+
+#Ajout des colonnes de df
+
+doc_df[['word_count', 'char_count', 'avg_word_len', 'punc_per']]=df_train[['word_count', 'char_count', 'avg_word_len', 'punc_per']]
+x_train_doc, x_val_doc, y_train_doc, y_val_doc=train_test_split(doc_df,df_train['target'],  test_size=0.1, random_state=123)
+x_test_doc[['word_count', 'char_count', 'avg_word_len', 'punc_per']]=df_test[['word_count', 'char_count', 'avg_word_len', 'punc_per']]
+
+model_doc1=logistic_regressor(x_train_doc, y_train_doc)
+
+x_val_doc, y_val_doc=clean_dataset(x_val_doc, y_val_doc)
+score=model_doc1.score(x_val_doc, y_val_doc)
+print(score)
+print("accuracy: ", accuracy_score(model_doc1.predict(x_val_doc), y_val_doc))
+pred_doc=model_doc1.predict(x_test_doc)
+pred_doc=[int(i) for i in pred_doc]
+np.unique(pred_doc)
+
+df_test['target']=pred_doc
+df_submit['target']=pred_doc
+df_submit.head()
+df_submit.to_csv('sample_submission.csv', index=False)
+
+"""En ajoutant ces vecteurs nous avons obtenu le meme score, donc inutile"""
