@@ -29,3 +29,72 @@ Ce projet social rend service énormément à la communauté car permettra aux s
     * gensim
     * nltk
     * spacy
+
+### A. Prétraitement du Test
+
+Nous nettoyons le texte et nous le transformons :
+Suppression:
+      •	URL
+      •	Balises HTML
+      •	Références de personnages
+      •	Caractères non imprimables
+      •	Valeurs numériques
+      Traitement
+      •	Lemmatisons le texte 
+      •	Conversion en minuscules. 
+      •	Suppression des caractères répétés dans les mots allongés,
+      •	Suppression des mots vides
+      •	Conservation des hashtags car ils peuvent fournir des informations précieuses sur ce projet particulier.
+
+
+
+#### Feature Engineering
+
+Nous créons 10 colonnes qui sont :
+   •	Nombre de phrases
+   •	Nombre de mots
+   •	Nombre de caractères
+   •	Nombre de hashtags
+   •	Nombre de mentions
+   •	Nombre de mots tout en majuscules
+   •	Longueur moyenne des mots
+   •	Nombre de noms propres (PROPN)
+   •	Nombre de noms non propres (NOM)
+   •	Pourcentage de caractères qui sont de la ponctuation
+
+### B. Features extractions 
+
+Cette étape nous permet de convertir les documents en vecteur pour etre utilisé par les modèles pour la prédiction
+Nous utilisons 2 méthodes principales :
+
+   *	TfidfVectorizer
+   *	Doc2vec 
+
+
+
+### C.	Modélisation : Résultats
+
+
+#### 1.	Logistic Régression :
+
+##### a.	With TFIDFVectorizer 
+
+   •	Nous recherchons les meilleurs hyper paramètres avec GridSearchCV
+   •	Accuracy : 0.7809139784946236        
+##### b. With Doc2vec
+   •	Nous recherchons les meilleurs hyper paramètres avec GridSearchCV
+   •	Accuracy : 0.6503311258278146
+
+
+ #### 2. 	Transformers
+##### a.	With TFIDFVectorizer 
+   Accuracy: 0.569
+
+##### b.	With Doc2vec
+Accuracy: 0.558
+
+
+
+  #### 3. Pre entrained model nnlm-en-dim50
+  
+            Accuracy: 0.7775
