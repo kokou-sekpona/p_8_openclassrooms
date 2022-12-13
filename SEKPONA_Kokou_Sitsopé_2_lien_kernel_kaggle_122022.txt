@@ -3,6 +3,7 @@
 https://github.com/kokou-sekpona/p_8_openclassrooms
 (Code de la compétition en format .py PEP8: Note pylint 7.78/10)
 
+
 #Kaggle Notebook Url(code partagé): 
 https://www.kaggle.com/code/kokousitsope/disasters-tweet-competition
 
