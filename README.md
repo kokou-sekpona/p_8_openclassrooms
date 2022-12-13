@@ -11,12 +11,18 @@ Ce projet social rend service énormément à la communauté car permettra aux s
 
 
 ### Plan de notre travail
-•	Nettoyage et analyse exploratoire
-•	Feature extractions
-•	Test de différents modèles avec les différentes méthodes d’extraction de features utilisé
-•	Utilisation d’une métrique commune pour mesurer les résultats et comparaison
-•	Soumission du résultat de chaque model sur Kaggle
+* Nettoyage et analyse exploratoire
+* Feature extractions
+* Test de différents modèles avec les différentes méthodes d’extraction de features utilisé
+* Utilisation d’une métrique commune pour mesurer les résultats et comparaison
+* Soumission du résultat de chaque model sur Kaggle
 
+### Dataset: 
+https://www.kaggle.com/competitions/nlp-getting-started/data
+* La dataset à l"adresse ci dessus est sous forme de 3 fichers:
+  Train, test, validation.
+
+    
 ### Bibliothèques:
     * transformers
     * sckit-learn
@@ -34,33 +40,34 @@ Ce projet social rend service énormément à la communauté car permettra aux s
 
 Nous nettoyons le texte et nous le transformons :
 Suppression:
-      •	URL
-      •	Balises HTML
-      •	Références de personnages
-      •	Caractères non imprimables
-      •	Valeurs numériques
-      Traitement
-      •	Lemmatisons le texte 
-      •	Conversion en minuscules. 
-      •	Suppression des caractères répétés dans les mots allongés,
-      •	Suppression des mots vides
-      •	Conservation des hashtags car ils peuvent fournir des informations précieuses sur ce projet particulier.
+      *	URL
+      *	Balises HTML
+      *	Références de personnages
+      *	Caractères non imprimables
+      *	Valeurs numériques
+Traitement
+      *	Lemmatisons le texte 
+      *	Conversion en minuscules. 
+      *	Suppression des caractères répétés dans les mots allongés,
+      
+      * Suppression des mots vides
+      *	Conservation des hashtags car ils peuvent fournir des informations précieuses sur ce projet particulier.
 
 
 
 #### Feature Engineering
 
 Nous créons 10 colonnes qui sont :
-   •	Nombre de phrases
-   •	Nombre de mots
-   •	Nombre de caractères
-   •	Nombre de hashtags
-   •	Nombre de mentions
-   •	Nombre de mots tout en majuscules
-   •	Longueur moyenne des mots
-   •	Nombre de noms propres (PROPN)
-   •	Nombre de noms non propres (NOM)
-   •	Pourcentage de caractères qui sont de la ponctuation
+   *	Nombre de phrases
+   *	Nombre de mot 
+   *  Nombre de caractères
+   *  Nombre de hashtags
+   *  Nombre de mentions
+   *  Nombre de mots tout en majuscules
+   *  Longueur moyenne des mots
+   *	Nombre de noms propres (PROPN)
+   *  Nombre de noms non propres (NOM)
+   *	Pourcentage de caractères qui sont de la ponctuation
 
 ### B. Features extractions 
 
@@ -79,11 +86,11 @@ Nous utilisons 2 méthodes principales :
 
 ##### a.	With TFIDFVectorizer 
 
-   •	Nous recherchons les meilleurs hyper paramètres avec GridSearchCV
-   •	Accuracy : 0.7809139784946236        
+   *	Nous recherchons les meilleurs hyper paramètres avec GridSearchCV
+   *	Accuracy : 0.7809139784946236        
 ##### b. With Doc2vec
-   •	Nous recherchons les meilleurs hyper paramètres avec GridSearchCV
-   •	Accuracy : 0.6503311258278146
+   *	Nous recherchons les meilleurs hyper paramètres avec GridSearchCV
+   *	Accuracy : 0.6503311258278146
 
 
  #### 2. 	Transformers
