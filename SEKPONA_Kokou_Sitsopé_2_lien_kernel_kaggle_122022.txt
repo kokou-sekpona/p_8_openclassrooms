@@ -1,0 +1,11 @@
+
+# Lien github:
+https://github.com/kokou-sekpona/p_8_openclassrooms
+(Code de la compétition en format .py PEP8: Note pylint 7.78/10)
+
+#Kaggle Notebook Url(code partagé): 
+https://www.kaggle.com/code/kokousitsope/disasters-tweet-competition
+
+
+#Autre code partagé avec la communauté(Implémentation du model pré entrainé nnlm-en-dim50:
+ https://www.kaggle.com/code/kokousitsope/pre-entrained-model-nnlm-en-dim50
